@@ -1,0 +1,57 @@
+﻿{
+	"Процессор" :
+	{
+		"AMD Athlon" :
+		{
+			"Цена" : 1000,
+			"Производительность" : 100
+		},
+		"Intel Pentium 4" :
+		{
+				"Price" : 1500,
+				"Performance" : 120
+		}
+	}
+	,
+	"Память" :
+	{
+		"128Mb SDRAM" :
+		{
+			"Price" : 500,
+			"Performance" : 75
+		},
+		"256Mb SDRAM" :
+		{
+				"Price" : 800,
+				"Performance" : 120
+		}
+	}
+	,
+	"Видеокарта" :
+	{
+		"GeForce 2 MX400 128Mb" :
+		{
+			"Price" : 500,
+			"Performance" : 75
+		},
+		"GeForce 4 256Mb" :
+		{
+				"Price" : 800,
+				"Performance" : 120
+		}
+	}
+	,
+	"Материнская плата" :
+	{
+		"AsRock" :
+		{
+			"Price" : 500,
+			"Performance" : 75
+		},
+		"MSI" :
+		{
+				"Price" : 800,
+				"Performance" : 120
+		}
+	}
+}
