@@ -44,3 +44,10 @@ class dbAdapter:
             pass
 
         self.conn.commit()
+
+if __name__ == "__main__":
+
+    db = dbAdapter()
+
+    db.db_init()
+    db.createTestData()
