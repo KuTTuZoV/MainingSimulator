@@ -35,8 +35,14 @@ class menu:
         return menuItems
 
     def backToParent(self):
-        self.currentLayer = self.parent[0]
-        self.parent.pop(0)
+        try:
+            self.currentLayer = self.parent[0]
+            self.parent.pop(0)
+        except:
+            self.structure = json.loads(open("menu", encoding="utf-8-sig").read())
+            self.currentLayer = self.structure
+
+            self.structure["Магазин"] = json.loads(open("assortment", encoding="utf-8-sig").read())
 
     def selectMenuItem(self, menuItem):
         try:

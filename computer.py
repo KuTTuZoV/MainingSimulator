@@ -9,7 +9,7 @@ class computer:
         "Память"        : list(),
     }
 
-    def addComponent(self, type, model):
+    def addComponent(self, type, model, perf):
         try:
             #(None, None, None) = 0
             #(Athlon, None, None) = 1
@@ -17,6 +17,7 @@ class computer:
             #(Athlon, Athlon, Athlon) = -1
 
             self.slots[type][self.slots[type].index(None)] = model
+            self.performance += perf
             return True
         except:
             return False
@@ -32,6 +33,8 @@ class computer:
         self.slots['Жесткий диск']  = list([None] * motherBoardSlots['Жесткий_диск'])
         self.slots['Видеокарта']    = list([None] * motherBoardSlots['Видеокарта'])
         self.slots['Память']        = list([None] * motherBoardSlots['Память'])
+
+        return True
 
     def calculatePerformance(self):
         performance = 0
