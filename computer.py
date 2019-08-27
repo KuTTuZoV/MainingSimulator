@@ -2,12 +2,7 @@ class computer:
 
     performance = 0
 
-    slots = {
-        "Процессор"    : list(),
-        "Жесткий диск" : list(),
-        "Видеокарта"    : list(),
-        "Память"        : list(),
-    }
+    slots = {}
 
     def addComponent(self, type, model, perf):
         try:
@@ -60,4 +55,9 @@ class computer:
 
         return description
     def __init__(self):
-        pass
+        self.slots = {
+            "Процессор": list(),
+            "Жесткий диск": list(),
+            "Видеокарта": list(),
+            "Память": list(),
+        }

@@ -1,5 +1,6 @@
 import psycopg2
 import player
+import computer
 
 class dbAdapter:
 
@@ -36,6 +37,10 @@ class dbAdapter:
         self.cursor.execute('INSERT INTO computerSetup_{} VALUES (\'{}\', \'{}\', {}, {}, 1)'.format(id,type,model,price,perf))
         self.conn.commit()
 
+    def addCashDB(self, cash, id):
+        self.cursor.execute('UPDATE users SET cash = {} WHERE id = {}'.format(cash, id))
+        self.conn.commit()
+
     def startDB(self):
 
         players = dict()
@@ -43,6 +48,7 @@ class dbAdapter:
         for id in idList:
 
             tempPlayer = player.player(id)
+            tempPlayer.computer = computer.computer()
             try:
                 self.cursor.execute('SELECT * FROM computersetup_{}'.format(id))
                 componentList = self.cursor.fetchall()

@@ -2,21 +2,31 @@ import telebot
 from telebot import types
 import DB_init
 import player
+import threading
+import computer
 from PyQt5.QtCore import pyqtSignal, QObject, QTimer
 
+def paydaySlot():
 
-telebot.apihelper.proxy = {'https' : 'socks5://166.62.123.35:32612'}
+    try:
+        for temp in players:
+            cash = players[temp].calculateCash()
+            dbAdapter.addCashDB(cash, players[temp].id)
+            bot.send_message(players[temp].id, text= "Ваши деньги: " + str(cash))
+    except:
+        pass
+
+    timer = threading.Timer(30, paydaySlot)
+    timer.start()
+
+telebot.apihelper.proxy = {'https' : 'socks5://166.62.123.35:39231'}
 bot = telebot.TeleBot('840761243:AAEvNP1aV2NHTQfXKEcflph-NTG7xmkKgB4')
-
-def paydaySlot(id, cash):
-    bot.send_message(id, text="Ваши деньги: " + str(cash))
 
 dbAdapter = DB_init.dbAdapter()
 
 players = dbAdapter.startDB()
-
-for tempPlayer in players:
-    players[tempPlayer].paydaySignal.connect(paydaySlot)
+timer = threading.Timer(30, paydaySlot)
+timer.start()
 
 def initUser(id):
     usersList = dbAdapter.getUsers()
@@ -57,8 +67,15 @@ def callback_inline(call):
         addCompResult = players[call.from_user.id].computer.addComponent(call.data.split(':')[0], call.data.split(':')[1], int(call.data.split(':')[2]))
 
     if addCompResult == True:
-        bot.send_message(call.from_user.id, text="Компонент добавлен!")
-        dbAdapter.addCompomentDB(call.from_user.id, call.data.split(':')[0], call.data.split(':')[1], players[call.from_user.id].menu.structure["Магазин"][call.data.split(':')[0]][call.data.split(':')[1]].get("Цена")
+        players[call.from_user.id].cash = players[call.from_user.id].cash - players[call.from_user.id].menu.structure["Магазин"][call.data.split(':')[0]][call.data.split(':')[1]].get("Цена");
+        if players[call.from_user.id].cash < 0:
+            bot.send_message(call.from_user.id, text="Недостаточно денег!")
+            players[call.from_user.id].cash = players[call.from_user.id].cash + \
+                                              players[call.from_user.id].menu.structure["Магазин"][
+                                                  call.data.split(':')[0]][call.data.split(':')[1]].get("Цена");
+        else:
+            bot.send_message(call.from_user.id, text="Компонент добавлен!")
+            dbAdapter.addCompomentDB(call.from_user.id, call.data.split(':')[0], call.data.split(':')[1], players[call.from_user.id].menu.structure["Магазин"][call.data.split(':')[0]][call.data.split(':')[1]].get("Цена")
                                  , players[call.from_user.id].menu.structure["Магазин"][call.data.split(':')[0]][call.data.split(':')[1]].get("Производительность"))
     else:
         bot.send_message(call.from_user.id, text="Что-то пошло не так!")
@@ -79,6 +96,7 @@ def any_msg(message):
         # bot.send_message(message.from_user.id, text="------", reply_markup=keyboard)
 
         players[message.from_user.id] = player.player(id)
+        players[message.from_user.id].computer = computer.computer()
 
         if message.from_user.id not in dbAdapter.getUsers():
             dbAdapter.addUser(message.from_user.id, "{} {}".format(message.from_user.first_name, message.from_user.last_name))
@@ -130,6 +148,10 @@ def any_msg(message):
         text=dbAdapter.showPC(message.from_user.id)
         testtext=players[message.from_user.id].computer.toString()
         bot.send_message(message.from_user.id, text=text)
+
+    if message.text == "Мой счет":
+        bot.send_message(message.from_user.id, text=players[message.from_user.id].cash)
+        dbAdapter.addCashDB(players[message.from_user.id].cash, players[message.from_user.id].id)
 
     menuItems = players[message.from_user.id].menu.showCurrentLayer()
 
