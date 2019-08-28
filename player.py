@@ -15,14 +15,14 @@ class player():
         self.cash += self.computer.performance
         return self.cash
 
-    def __init__(self, id):
+    def __init__(self, id, cash):
         super().__init__()
 
         hintsData = json.loads(open("hints", encoding="utf-8-sig").read())
         hintKeys  = list(hintsData)
         self.hints = list()
         self.id = id
-
+        self.cash = cash
         for key in hintKeys:
             self.hints.append(key + " : " + hintsData[key])
 

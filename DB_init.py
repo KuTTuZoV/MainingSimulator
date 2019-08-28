@@ -19,7 +19,10 @@ class dbAdapter:
         self.cursor.execute('SELECT id FROM users')
         data = self.cursor.fetchall()
         self.conn.commit()
-        return list(map(lambda x: x[0], data))
+        self.cursor.execute('SELECT cash FROM users')
+        dataCash = self.cursor.fetchall()
+        self.conn.commit()
+        return list(map(lambda x: x[0], data)), list(map(lambda x: x[0], dataCash))
 
     def getUserNames(self):
         self.cursor.execute('SELECT username FROM users')
@@ -44,10 +47,10 @@ class dbAdapter:
     def startDB(self):
 
         players = dict()
-        idList = self.getUsers()
-        for id in idList:
+        idList, cashList = self.getUsers()
+        for id,cash in zip(idList, cashList):
 
-            tempPlayer = player.player(id)
+            tempPlayer = player.player(id, cash)
             tempPlayer.computer = computer.computer()
             try:
                 self.cursor.execute('SELECT * FROM computersetup_{}'.format(id))
@@ -69,7 +72,7 @@ class dbAdapter:
 
     def showPC(self, id):
         description = ""
-        tempPlayer = player.player(id)
+        tempPlayer = player.player(id, 0)
         try:
             stucker = 0
             self.cursor.execute('SELECT * FROM computersetup_{}'.format(id))
@@ -120,7 +123,7 @@ class dbAdapter:
 
     def db_init(self):
         try:
-            self.cursor.execute('CREATE TABLE users(id INTEGER, userName TEXT, cash INTEGER)')
+            self.cursor.execute('CREATE TABLE users(id UNIQUE INTEGER, userName TEXT, cash INTEGER)')
 
         except:
             pass
