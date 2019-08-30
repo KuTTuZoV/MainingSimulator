@@ -16,16 +16,16 @@ def paydaySlot():
     except:
         pass
 
-    timer = threading.Timer(3600, paydaySlot)
+    timer = threading.Timer(10, paydaySlot)
     timer.start()
 
-telebot.apihelper.proxy = {'https' : 'socks5://166.62.123.35:39231'}
+telebot.apihelper.proxy = {'https' : 'socks5://34.193.167.54:9090'}
 bot = telebot.TeleBot('840761243:AAEvNP1aV2NHTQfXKEcflph-NTG7xmkKgB4')
 
 dbAdapter = DB_init.dbAdapter()
 
 players = dbAdapter.startDB()
-timer = threading.Timer(3600, paydaySlot)
+timer = threading.Timer(10, paydaySlot)
 timer.start()
 
 def initUser(id):
@@ -73,24 +73,61 @@ def callback_inline(call):
             bot.send_message(call.from_user.id, text="Недостаточно денег!")
 
         a = 5
+
+    elif componentData[0] == "sell":
+        players[call.from_user.id].computer.removeComponent(componentData[1], componentData[2])
+        dbAdapter.sellInDB(call.from_user.id, componentData[2])
+        players[call.from_user.id].cash += int(componentData[3])
+
+
+    elif componentData[0] == "Eject":
+        players[call.from_user.id].computer.deactivateComponent(componentData[1], componentData[2])
+        dbAdapter.deactivateInDB(call.from_user.id, componentData[2])
+
+    elif componentData[0] == "Inject":
+        flag = players[call.from_user.id].computer.activateComponent(componentData[1], componentData[2])
+        if flag == True:
+            dbAdapter.activateInDB(call.from_user.id, componentData[2])
+
+
     else:
-        if players[call.from_user.id].cash >= players[call.from_user.id].menu.structure["Магазин"][call.data.split(':')[0]][call.data.split(':')[1]].get("Цена"):
-            addCompResult = players[call.from_user.id].computer.addComponent(call.data.split(':')[0], call.data.split(':')[1], int(call.data.split(':')[2]))
+
+        price = players[call.from_user.id].menu.structure["Магазин"][call.data.split(':')[0]][call.data.split(':')[1]].get("Цена")
+
+        if players[call.from_user.id].cash >= price:
+            addCompResult = players[call.from_user.id].computer.addComponent(call.data.split(':')[0], call.data.split(':')[1], price,
+                                                                                 int(call.data.split(':')[2]), 1)
 
             if addCompResult == True:
                 players[call.from_user.id].cash = players[call.from_user.id].cash - \
-                                                  players[call.from_user.id].menu.structure["Магазин"][
-                                                      call.data.split(':')[0]][call.data.split(':')[1]].get("Цена");
+                                                      players[call.from_user.id].menu.structure["Магазин"][
+                                                          call.data.split(':')[0]][call.data.split(':')[1]].get("Цена");
         else:
             bot.send_message(call.from_user.id, text="Недостаточно денег!")
 
+
     if addCompResult == True:
         bot.send_message(call.from_user.id, text="Компонент добавлен!")
+        dbAdapter.addCashDB(players[call.from_user.id].cash, players[call.from_user.id].id)
         dbAdapter.addCompomentDB(call.from_user.id, call.data.split(':')[0], call.data.split(':')[1], players[call.from_user.id].menu.structure["Магазин"][call.data.split(':')[0]][call.data.split(':')[1]].get("Цена")
-                                 , players[call.from_user.id].menu.structure["Магазин"][call.data.split(':')[0]][call.data.split(':')[1]].get("Производительность"))
+                                 , players[call.from_user.id].menu.structure["Магазин"][call.data.split(':')[0]][call.data.split(':')[1]].get("Производительность"), 1)
+
+    elif componentData[0] == "sell" or componentData[0] == "Eject":
+        bot.send_message(call.from_user.id, text="Вы провели продажу или извлечение!")
+
+    elif componentData[0] == "Inject":
+        if flag == True:
+            bot.send_message(call.from_user.id, text="Вы провели вставку!")
+        else:
+            bot.send_message(call.from_user.id, text="{} итак активен!".format(componentData[1]))
+
     else:
         bot.send_message(call.from_user.id, text="Что-то пошло не так!")
     pass
+
+
+
+
 
 @bot.message_handler(content_types=["text"])
 def any_msg(message):
@@ -157,9 +194,34 @@ def any_msg(message):
         players[message.from_user.id].menu.selectMenuItem(message.text)
 
     if message.text == "Мой компьютер":
-        text=dbAdapter.showPC(message.from_user.id)
+        #text=dbAdapter.showPC(message.from_user.id)
         testtext=players[message.from_user.id].computer.toString()
-        bot.send_message(message.from_user.id, text=text)
+        try:
+            motherboard = dbAdapter.iNeedMB(message.from_user.id)
+        except:
+            pass
+        for line in testtext.split('\n'):
+            items = line.split(":")
+
+            try:
+                itemDescription = "Тип: {}, Модель: {}, Цена: {}, Производительность: {}, Активность: {}".format(items[0], items[1], items[2], items[3], items[4])
+                #bot.send_message(message.from_user.id, text=itemDescription)
+                keyboard = types.InlineKeyboardMarkup(row_width=3)
+                button = types.InlineKeyboardButton(text = "Продать", callback_data = "sell:" + line)
+                button1 = types.InlineKeyboardButton(text="Извлечь", callback_data = "Eject:" + line)
+                button2 = types.InlineKeyboardButton(text="Вставить", callback_data="Inject:" + line)
+                #keyboard.row(types.InlineKeyboardButton(text="Продать", callback_data = "sell:" + line))
+               # keyboard.row(types.InlineKeyboardButton(text="Извлечь", callback_data = "Eject:" + line))
+                keyboard.add(button, button1, button2)
+                bot.send_message(message.from_user.id, text=itemDescription, reply_markup=keyboard)
+            except:
+                if testtext.split('\n')[0] == "":
+                    bot.send_message(message.from_user.id, text="У вас нет материнки!")
+                elif line == "":
+                    bot.send_message(message.from_user.id, text="Это слоты вашей материнки: {}!".format(motherboard))
+                else:
+                    itemDescription = "Тип: {}, Свободен".format(items[0])
+                    bot.send_message(message.from_user.id, text=itemDescription)
 
     if message.text == "Мой счет":
         bot.send_message(message.from_user.id, text=players[message.from_user.id].cash)
@@ -176,3 +238,4 @@ def any_msg(message):
 
 if __name__ == "__main__":
     bot.polling(none_stop=True)
+

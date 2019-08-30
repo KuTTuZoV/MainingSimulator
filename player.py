@@ -12,7 +12,7 @@ class player():
     id = 0
 
     def calculateCash(self):
-        self.cash += self.computer.performance
+        self.cash += self.computer.calculatePerformance()
         return self.cash
 
     def __init__(self, id, cash):

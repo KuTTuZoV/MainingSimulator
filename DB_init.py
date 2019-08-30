@@ -32,16 +32,32 @@ class dbAdapter:
     def addUser(self,id,userName):
         self.cursor.execute('INSERT INTO users VALUES ({}, \'{}\', 0)'.format(id, userName))
         self.conn.commit()
-        self.cursor.execute('CREATE TABLE computerSetup_{}(type TEXT, model TEXT, price INTEGER, perf INTEGER,'
+        try:
+            self.cursor.execute('CREATE TABLE computerSetup_{}(type TEXT, model TEXT, price INTEGER, perf INTEGER,'
                             ' activ INTEGER)'.format(id))
+        except:
+            pass
         self.conn.commit()
 
-    def addCompomentDB(self,id,type,model,price,perf):
-        self.cursor.execute('INSERT INTO computerSetup_{} VALUES (\'{}\', \'{}\', {}, {}, 1)'.format(id,type,model,price,perf))
+
+    def addCompomentDB(self,id,type,model,price,perf, activ):
+        self.cursor.execute('INSERT INTO computerSetup_{} VALUES (\'{}\', \'{}\', {}, {}, {})'.format(id,type,model,price,perf, activ))
         self.conn.commit()
 
     def addCashDB(self, cash, id):
         self.cursor.execute('UPDATE users SET cash = {} WHERE id = {}'.format(cash, id))
+        self.conn.commit()
+
+    def sellInDB(self, id, model):
+        self.cursor.execute('DELETE FROM computerSetup_{} WHERE model = \'{}\''.format(id, model))
+        self.conn.commit()
+
+    def deactivateInDB(self, id, model):
+        self.cursor.execute('UPDATE computerSetup_{} SET activ = {} WHERE model = \'{}\''.format(id, 0, model))
+        self.conn.commit()
+
+    def activateInDB(self, id, model):
+        self.cursor.execute('UPDATE computerSetup_{} SET activ = {} WHERE model = \'{}\''.format(id, 1, model))
         self.conn.commit()
 
     def startDB(self):
@@ -62,13 +78,23 @@ class dbAdapter:
                 addCompResult = tempPlayer.computer.setMotherBoard(motherboard)
                 for component in componentList:
                     if component[0] != "Материнская плата":
-                        tempPlayer.computer.addComponent(component[0], component[1], component[3])
+                        tempPlayer.computer.addComponent(component[0], component[1], component[2], component[3], component[4])
             except:
                 self.conn.commit()
 
             players[id] = tempPlayer
 
         return players
+
+    def iNeedMB(self, id):
+
+        self.cursor.execute('SELECT model FROM computersetup_{} WHERE type = \'{}\''.format(id, "Материнская плата"))
+        MB = self.cursor.fetchall()
+        self.conn.commit()
+
+        return MB[0][0]
+
+
 
     def showPC(self, id):
         description = ""
@@ -123,7 +149,7 @@ class dbAdapter:
 
     def db_init(self):
         try:
-            self.cursor.execute('CREATE TABLE users(id UNIQUE INTEGER, userName TEXT, cash INTEGER)')
+            self.cursor.execute('CREATE TABLE users(id INTEGER, userName TEXT, cash INTEGER)')
 
         except:
             pass
