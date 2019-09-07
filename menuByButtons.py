@@ -2,9 +2,26 @@ import telebot
 from telebot import types
 import DB_init
 import player
+import requests
+from xml.dom.minidom import parseString
 
-telebot.apihelper.proxy = {'https' : 'socks5://70.102.86.204:8080'}
-bot = telebot.TeleBot('840761243:AAEvNP1aV2NHTQfXKEcflph-NTG7xmkKgB4')
+proxyList = open("C:/proxy.txt", "r").read().split('\n')
+
+for proxy in proxyList:
+    telebot.apihelper.proxy = {'https' : 'socks5://{}'.format(proxy)}
+    try:
+        bot = telebot.TeleBot('840761243:AAEvNP1aV2NHTQfXKEcflph-NTG7xmkKgB4')
+        print("Trying to connect proxy {}....".format(proxy), end="")
+        bot.get_me()
+        print("SUCCESS")
+        break
+    except:
+        proxyList.pop(0)
+        print("FAIL")
+
+proxyFile = open("C:/proxy.txt", "w")
+for proxy in proxyList:
+    proxyFile.write(proxy + "\n")
 
 dbAdapter = DB_init.dbAdapter()
 
