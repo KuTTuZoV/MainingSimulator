@@ -19,8 +19,23 @@ def paydaySlot():
     timer = threading.Timer(10, paydaySlot)
     timer.start()
 
-telebot.apihelper.proxy = {'https' : 'socks5://34.193.167.54:9090'}
-bot = telebot.TeleBot('840761243:AAEvNP1aV2NHTQfXKEcflph-NTG7xmkKgB4')
+proxyList = open("C:/proxy.txt", "r").read().split('\n')
+
+for proxy in proxyList:
+    telebot.apihelper.proxy = {'https' : 'socks5://{}'.format(proxy)}
+    try:
+        bot = telebot.TeleBot('840761243:AAEvNP1aV2NHTQfXKEcflph-NTG7xmkKgB4')
+        print("Trying to connect proxy {}....".format(proxy), end="")
+        bot.get_me()
+        print("SUCCESS")
+        break
+    except:
+        proxyList.pop(0)
+        print("FAIL")
+
+proxyFile = open("C:/proxy.txt", "w")
+for proxy in proxyList:
+    proxyFile.write(proxy + "\n")
 
 dbAdapter = DB_init.dbAdapter()
 
