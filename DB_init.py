@@ -1,11 +1,14 @@
 import psycopg2
 import player
 import computer
+import json
 
 class dbAdapter:
 
     conn = None
     cursor = None
+
+    assortment = json.loads(open("assortment", encoding="utf-8-sig").read())
 
     def __init__(self):
         try:
@@ -33,15 +36,35 @@ class dbAdapter:
         self.cursor.execute('INSERT INTO users VALUES ({}, \'{}\', 0)'.format(id, userName))
         self.conn.commit()
         try:
+            self.cursor.execute('CREATE TABLE motherboards_{}(id INTEGER UNIQUE, type TEXT, model TEXT, price INTEGER, perf INTEGER,'
+                                ' activ INTEGER)'.format(id))
+
             self.cursor.execute('CREATE TABLE computerSetup_{}(type TEXT, model TEXT, price INTEGER, perf INTEGER,'
-                            ' activ INTEGER)'.format(id))
+                            ' activ INTEGER, level INTEGER, motherboard INTEGER)'.format(id))
         except:
             pass
         self.conn.commit()
 
+    def delUser(self, id):
+        self.cursor.execute('DELETE FROM users where id={}'.format(id))
+        self.conn.commit()
+        try:
+            self.cursor.execute(
+                'DROP TABLE motherboards_{}'.format(id))
 
-    def addCompomentDB(self,id,type,model,price,perf, activ):
-        self.cursor.execute('INSERT INTO computerSetup_{} VALUES (\'{}\', \'{}\', {}, {}, {})'.format(id,type,model,price,perf, activ))
+            self.cursor.execute('DROP TABLE computerSetup_{}'.format(id))
+        except:
+            pass
+        self.conn.commit()
+
+    def addMotherboard(self, id, mbid, type, model, price, perf, activ):
+        self.cursor.execute(
+            'INSERT INTO motherboards_{} VALUES (\'{}\', \'{}\', \'{}\', {}, {}, {})'.format(id, mbid, type, model, price, perf,
+                                                                                      activ))
+        self.conn.commit()
+
+    def addCompomentDB(self,id,type,model,price,perf, activ, level, motherboard):
+        self.cursor.execute('INSERT INTO computerSetup_{} VALUES (\'{}\', \'{}\', {}, {}, {}, {}, {})'.format(id,type,model,price,perf, activ, level, motherboard))
         self.conn.commit()
 
     def addCashDB(self, cash, id):
@@ -68,17 +91,24 @@ class dbAdapter:
 
             tempPlayer = player.player(id, cash)
             tempPlayer.computer = computer.computer()
+
+            try:
+                self.cursor.execute('SELECT * FROM motherboards_{}'.format(id))
+                motherboardList = self.cursor.fetchall()
+
+                for motherboard in motherboardList:
+                    tempMotherboard = self.assortment["Материнская плата"][motherboard[2]]["Слоты"]
+                    compability     = self.assortment["Материнская плата"][motherboard[2]]["Совместимость"]
+                    tempPlayer.computer.setMotherBoard(tempMotherboard, compability)
+            except:
+                pass
+
             try:
                 self.cursor.execute('SELECT * FROM computersetup_{}'.format(id))
                 componentList = self.cursor.fetchall()
-                motherboardDB = list(filter(lambda x: x[0] == "Материнская плата", componentList))
 
-                motherboard = tempPlayer.menu.structure["Магазин"]["Материнская плата"][motherboardDB[0][1]]['Слоты']
-
-                addCompResult = tempPlayer.computer.setMotherBoard(motherboard)
                 for component in componentList:
-                    if component[0] != "Материнская плата":
-                        tempPlayer.computer.addComponent(component[0], component[1], component[2], component[3], component[4])
+                        tempPlayer.computer.addComponent(component[0], component[1], component[2], component[3], component[4], component[5])
             except:
                 self.conn.commit()
 
@@ -131,7 +161,7 @@ class dbAdapter:
 
     def createTestData(self):
         try:
-            self.addCompomentDB(111,"Процессор","afd","500","100")
+            self.addCompomentDB(123,"Процессор","afd","500","100")
             self.addCompomentDB(112, "Процессор", "afd", "500", "100")
             self.addCompomentDB(113, "Процессор", "afd", "500", "100")
 
@@ -147,9 +177,28 @@ class dbAdapter:
 
         self.conn.commit()
 
+    def dropTable(self, tableName):
+        try:
+            self.cursor.execute('DROP {}'.format(tableName))
+            self.conn.commit()
+        except:
+            self.conn.commit()
+
+    def getTables(self):
+
+        try:
+            self.cursor.execute('SELECT * FROM information_schema.tables WHERE table_schema = \'public\'')
+            tables = self.cursor.fetchall()
+            self.conn.commit()
+
+            return list(map(lambda x: x[2], tables))
+        except:
+            self.conn.commit()
+
+
     def db_init(self):
         try:
-            self.cursor.execute('CREATE TABLE users(id INTEGER, userName TEXT, cash INTEGER)')
+            self.cursor.execute('CREATE TABLE users(id INTEGER UNIQUE, userName TEXT, cash INTEGER)')
 
         except:
             pass
@@ -160,5 +209,7 @@ if __name__ == "__main__":
 
     db = dbAdapter()
 
-    db.db_init()
+    db.getTables()
+
+    #db.db_init()
     #db.createTestData()

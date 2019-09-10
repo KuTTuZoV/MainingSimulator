@@ -5,25 +5,31 @@ class computer:
     performance = 0
 
     slots = {}
+    compability = {}
 
-    def addComponent(self, type, model, price, perf, active):
+    def addComponent(self, type, model, price, perf, active, level):
         try:
             #(None, None, None) = 0
             #(Athlon, None, None) = 1
             #(Athlon, Athlon, None) = 2
             #(Athlon, Athlon, Athlon) = -1
 
-            index = self.slots[type].index(None)
-            self.slots[type][self.slots[type].index(None)] = dict()
+            if level in self.compability[type]:
 
-            self.slots[type][index]["Модель"]    = model
-            self.slots[type][index]["Цена"]      = price
-            self.slots[type][index]["Производительность"] = perf
-            self.slots[type][index]["Активность"] = active
-            #self.performance += perf
-            return True
+                index = self.slots[type].index(None)
+                self.slots[type][self.slots[type].index(None)] = dict()
+
+                self.slots[type][index]["Модель"]    = model
+                self.slots[type][index]["Цена"]      = price
+                self.slots[type][index]["Производительность"] = perf
+                self.slots[type][index]["Активность"] = active
+                self.slots[type][index]["Уровень"]    = level
+                #self.performance += perf
+                return True, "Компонент установлен!"
+            else:
+                return False, "Компонент несовместим!"
         except:
-            return False
+            return False, "Нет свободных слотов"
 
     def removeComponent(self, type, model):
 
@@ -73,11 +79,13 @@ class computer:
     #Удаление материнской платы
     #Проверка на наличие мат платы
 
-    def setMotherBoard(self, motherBoardSlots):
+    def setMotherBoard(self, motherBoardSlots, compability):
         self.slots['Процессор']     = list([None] * motherBoardSlots['Процессор'])
         self.slots['Жесткий диск']  = list([None] * motherBoardSlots['Жесткий_диск'])
         self.slots['Видеокарта']    = list([None] * motherBoardSlots['Видеокарта'])
         self.slots['Память']        = list([None] * motherBoardSlots['Память'])
+
+        self.compability = compability
 
         return True
 

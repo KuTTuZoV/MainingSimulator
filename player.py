@@ -2,8 +2,6 @@ import computer
 import menu
 import json
 
-
-
 class player():
     computer = computer.computer()
     menu = menu.menu()
