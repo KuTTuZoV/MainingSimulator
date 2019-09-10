@@ -87,7 +87,7 @@ class computer:
 
         self.compability = compability
 
-        return True
+        return True, "Материнская плпта установлена!"
 
     def calculatePerformance(self):
         performance = 0

@@ -4,6 +4,7 @@ import DB_init
 import player
 import threading
 import computer
+import json
 from PyQt5.QtCore import pyqtSignal, QObject, QTimer
 
 def paydaySlot():
@@ -16,10 +17,10 @@ def paydaySlot():
     except:
         pass
 
-    timer = threading.Timer(10, paydaySlot)
+    timer = threading.Timer(500, paydaySlot)
     timer.start()
 
-proxyList = open("C:/proxy.txt", "r").read().split('\n')
+proxyList = open("proxy.txt", "r").read().split('\n')
 
 for proxy in proxyList:
     telebot.apihelper.proxy = {'https' : 'socks5://{}'.format(proxy)}
@@ -33,15 +34,17 @@ for proxy in proxyList:
         proxyList.pop(0)
         print("FAIL")
 
-proxyFile = open("C:/proxy.txt", "w")
+proxyFile = open("proxy.txt", "w")
 for proxy in proxyList:
     proxyFile.write(proxy + "\n")
+
 
 dbAdapter = DB_init.dbAdapter()
 
 players = dbAdapter.startDB()
-timer = threading.Timer(10, paydaySlot)
+timer = threading.Timer(5, paydaySlot)
 timer.start()
+assortment = json.loads(open("assortment", encoding="utf-8-sig").read())
 
 def initUser(id):
     usersList = dbAdapter.getUsers()
@@ -74,16 +77,26 @@ def callback_inline(call):
     addCompResult = False
 
     if componentData[0] == "Материнская плата":
-        if players[call.from_user.id].cash >= players[call.from_user.id].menu.structure["Магазин"][call.data.split(':')[0]][call.data.split(':')[1]].get("Цена"):
 
-            motherboard = players[call.from_user.id].menu.structure["Магазин"]["Материнская плата"][call.data.split(':')[1]]['Слоты']
+        component = assortment["Материнская плата"][call.data.split(':')[1]]
 
-            addCompResult = players[call.from_user.id].computer.setMotherBoard(motherboard)
+        price = component["Цена"]
+        perf  = component["Производительность"]
 
-            if addCompResult == True:
+        if players[call.from_user.id].cash >= price:
+
+            motherboard = component['Слоты']
+            compability = component['Совместимость']
+
+            addMBResult, msg = players[call.from_user.id].computer.setMotherBoard(motherboard, compability)
+
+            if addMBResult == True:
                 players[call.from_user.id].cash = players[call.from_user.id].cash - \
-                                                  players[call.from_user.id].menu.structure["Магазин"][
+                                                 assortment[
                                                       call.data.split(':')[0]][call.data.split(':')[1]].get("Цена");
+
+            dbAdapter.addMotherboard(call.from_user.id, 1, "Материнская плата", call.data.split(':')[1], price, perf, 1)
+
         else:
             bot.send_message(call.from_user.id, text="Недостаточно денег!")
 
@@ -106,16 +119,19 @@ def callback_inline(call):
 
 
     else:
+        component = assortment[call.data.split(':')[0]][call.data.split(':')[1]]
 
-        price = players[call.from_user.id].menu.structure["Магазин"][call.data.split(':')[0]][call.data.split(':')[1]].get("Цена")
+        price = component["Цена"]
+        perf  = component["Производительность"]
+        level = component["Уровень"]
 
         if players[call.from_user.id].cash >= price:
-            addCompResult = players[call.from_user.id].computer.addComponent(call.data.split(':')[0], call.data.split(':')[1], price,
-                                                                                 int(call.data.split(':')[2]), 1)
+            addCompResult, msg = players[call.from_user.id].computer.addComponent(call.data.split(':')[0], call.data.split(':')[1], price,
+                                                                                 perf, 1, level)
 
             if addCompResult == True:
                 players[call.from_user.id].cash = players[call.from_user.id].cash - \
-                                                      players[call.from_user.id].menu.structure["Магазин"][
+                                                     assortment[
                                                           call.data.split(':')[0]][call.data.split(':')[1]].get("Цена");
         else:
             bot.send_message(call.from_user.id, text="Недостаточно денег!")
@@ -123,9 +139,15 @@ def callback_inline(call):
 
     if addCompResult == True:
         bot.send_message(call.from_user.id, text="Компонент добавлен!")
+
+        component = assortment[call.data.split(':')[0]][call.data.split(':')[1]]
+
+        price = component["Цена"]
+        perf = component["Производительность"]
+        level = component["Уровень"]
+
         dbAdapter.addCashDB(players[call.from_user.id].cash, players[call.from_user.id].id)
-        dbAdapter.addCompomentDB(call.from_user.id, call.data.split(':')[0], call.data.split(':')[1], players[call.from_user.id].menu.structure["Магазин"][call.data.split(':')[0]][call.data.split(':')[1]].get("Цена")
-                                 , players[call.from_user.id].menu.structure["Магазин"][call.data.split(':')[0]][call.data.split(':')[1]].get("Производительность"), 1)
+        dbAdapter.addCompomentDB(call.from_user.id, call.data.split(':')[0], call.data.split(':')[1],price, perf, 1, level, 1)
 
     elif componentData[0] == "sell" or componentData[0] == "Eject":
         bot.send_message(call.from_user.id, text="Вы провели продажу или извлечение!")

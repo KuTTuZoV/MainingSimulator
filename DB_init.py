@@ -118,7 +118,7 @@ class dbAdapter:
 
     def iNeedMB(self, id):
 
-        self.cursor.execute('SELECT model FROM computersetup_{} WHERE type = \'{}\''.format(id, "Материнская плата"))
+        self.cursor.execute('SELECT model FROM motherboards_{}'.format(id))
         MB = self.cursor.fetchall()
         self.conn.commit()
 
@@ -209,7 +209,7 @@ if __name__ == "__main__":
 
     db = dbAdapter()
 
-    db.getTables()
+    #db.getTables()
 
-    #db.db_init()
+    db.db_init()
     #db.createTestData()
