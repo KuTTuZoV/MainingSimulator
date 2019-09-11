@@ -37,13 +37,21 @@ class computer:
         index = 0
 
         for slot in self.slots[type]:
-            if slot["Модель"] == model:
-                self.slots[type][index] = None
-                removeFlag = True
-                break
-            index += 1
+            try:
+                if slot["Модель"] == model:
+                    self.slots[type][index] = None
+                    removeFlag = True
+                    break
+                index += 1
+            except:
+                index += 1
 
-        return removeFlag
+        if removeFlag == True:
+            return True, "Компонент успешно извлечен!"
+
+        else:
+            return True, "Компонент не найден!"
+
 
     def deactivateComponent(self, type, model):
 
@@ -51,11 +59,14 @@ class computer:
         index = 0
 
         for slot in self.slots[type]:
-            if slot["Модель"] == model:
-                self.slots[type][index]['Активность'] = 0
-                removeFlag = True
-                break
-            index += 1
+            try:
+                if slot["Модель"] == model:
+                    self.slots[type][index]['Активность'] = 0
+                    removeFlag = True
+                    break
+                index += 1
+            except:
+                index += 1
 
         return removeFlag
 
@@ -87,7 +98,7 @@ class computer:
 
         self.compability = compability
 
-        return True, "Материнская плпта установлена!"
+        return True, "Материнская плата установлена!"
 
     def calculatePerformance(self):
         performance = 0

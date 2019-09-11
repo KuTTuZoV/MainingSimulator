@@ -32,6 +32,16 @@ class dbAdapter:
         data = self.cursor.fetchall()
         return list(map(lambda x: x[0], data))
 
+    def getUserComponents(self, id):
+        self.cursor.execute('SELECT * FROM computerSetup_{}'.format(id))
+        data = self.cursor.fetchall()
+        return data
+
+    def getUserMotherboards(self, id):
+        self.cursor.execute('SELECT * FROM motherboards_{}'.format(id))
+        data = self.cursor.fetchall()
+        return data
+
     def addUser(self,id,userName):
         self.cursor.execute('INSERT INTO users VALUES ({}, \'{}\', 0)'.format(id, userName))
         self.conn.commit()
@@ -71,12 +81,36 @@ class dbAdapter:
         self.cursor.execute('UPDATE users SET cash = {} WHERE id = {}'.format(cash, id))
         self.conn.commit()
 
-    def sellInDB(self, id, model):
-        self.cursor.execute('DELETE FROM computerSetup_{} WHERE model = \'{}\''.format(id, model))
+    def sellInDB(self, id, model, mbid):
+
+        cmd = 'DELETE\
+        FROM\
+        computersetup_{}\
+        WHERE\
+        ctid = (SELECT ctid FROM computerSetup_{} where model = \'{}\' AND motherboard={} AND activ=0 LIMIT 1)'
+
+        self.cursor.execute(cmd.format(id, id,  model, mbid))
         self.conn.commit()
 
-    def deactivateInDB(self, id, model):
-        self.cursor.execute('UPDATE computerSetup_{} SET activ = {} WHERE model = \'{}\''.format(id, 0, model))
+    def deactivateInDB(self, id, model, mbid):
+
+        cmd = 'UPDATE computerSetup_{}\
+        SET\
+        activ = 0\
+        FROM(SELECT\
+        ctid\
+        FROM\
+        computerSetup_{}\
+        where\
+        model=\'{}\'\
+        AND motherboard={}\
+        AND activ=1\
+        LIMIT 1)\
+        as t\
+        WHERE\
+        computerSetup_{}.ctid = t.ctid'
+
+        self.cursor.execute(cmd.format(id, id, model, mbid, id))
         self.conn.commit()
 
     def activateInDB(self, id, model):
@@ -106,6 +140,8 @@ class dbAdapter:
             try:
                 self.cursor.execute('SELECT * FROM computersetup_{}'.format(id))
                 componentList = self.cursor.fetchall()
+
+                tempPlayer.components = componentList
 
                 for component in componentList:
                         tempPlayer.computer.addComponent(component[0], component[1], component[2], component[3], component[4], component[5])
