@@ -48,6 +48,46 @@
         perfInput.value = perf
 
     }
+
+    function delComponent(id, componentId)
+    {
+        var xhr = new XMLHttpRequest()
+        var url = 'http://localhost/phptest/deleteComponent.php?id={id}&componentId={componentId}'
+
+        url = url.replace('{id}', id)
+        url = url.replace('{componentId}', componentId.id)
+        
+        xhr.open('GET', url)
+        xhr.send()
+    }
+
+    function addComponent(id) {
+        catList = document.getElementById("categoryList")
+        modelList = document.getElementById("modelList")
+        priceInput = document.getElementById("price")
+        perfInput = document.getElementById("perf")
+        activ = document.getElementById("activ")
+
+        var category = catList.value
+        var model = modelList.value
+        var price = priceInput.value
+        var perf = perfInput.value 
+        var activ = activ.value
+
+        var xhr = new XMLHttpRequest()
+        var url = 'http://localhost/phptest/addComponent.php?id={id}&category=\'{cat}\'&model=\'{mod}\'&price={pr}&perf={perf}&activ={act}'
+
+        url = url.replace('{id}', id)
+        url = url.replace('{cat}', category)
+        url = url.replace('{mod}', model)
+        url = url.replace('{pr}', price)
+        url = url.replace('{perf}', perf)
+        url = url.replace('{act}', activ)
+        
+        xhr.open('GET', url)
+        xhr.send()
+    }
+
 </Script>
 
 <?php
@@ -115,12 +155,12 @@ echo "<tr>
 while ($row = pg_fetch_row($result)) {
     echo "<tr>";
 
-    echo "<td> $row[0] </td>";
     echo "<td> $row[1] </td>";
     echo "<td> $row[2] </td>";
     echo "<td> $row[3] </td>";
     echo "<td> $row[4] </td>";
-    echo "<td> <button type='button' class='btn btn-primary'> Delete </button> </td>";  
+    echo "<td> $row[5] </td>";
+    echo "<td> <button id={$row[0]} onClick='delComponent({$id}, event.currentTarget)' type='button' class='btn btn-primary'> Delete </button> </td>";  
     //echo "<td> <a href='getComputerSetup.php?id={$row[0]}'> Continue </a> </td>";  
 
     echo "</tr>";
@@ -161,4 +201,4 @@ echo "</tr>";
 echo "</table>";
 
 
-echo "<td> <button type='button' class='btn btn-primary'> Add component </button> </td>"; 
+echo "<td> <button type='button' onClick='addComponent({$id})' class='btn btn-primary'> Add component </button> </td>"; 
