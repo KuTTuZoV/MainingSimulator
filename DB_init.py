@@ -49,7 +49,7 @@ class dbAdapter:
             self.cursor.execute('CREATE TABLE motherboards_{}(id INTEGER UNIQUE, type TEXT, model TEXT, price INTEGER, perf INTEGER,'
                                 ' activ INTEGER)'.format(id))
 
-            self.cursor.execute('CREATE TABLE computerSetup_{}(type TEXT, model TEXT, price INTEGER, perf INTEGER,'
+            self.cursor.execute('CREATE TABLE computerSetup_{}(componentId SERIAL, type TEXT, model TEXT, price INTEGER, perf INTEGER,'
                             ' activ INTEGER, level INTEGER, motherboard INTEGER)'.format(id))
         except:
             pass
